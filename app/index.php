@@ -4941,8 +4941,8 @@ function view_screens_home(array $__d = []): string
                 <?= $heroImg !== '' ? $heroImg : view('partials.orb') ?>
                 <?php if ($videos !== []): ?>
                     <div class="hero__reel" data-reel='<?= e((string) json_encode($videos, JSON_UNESCAPED_SLASHES)) ?>'>
-                        <video class="hero__video" autoplay muted playsinline preload="none" disablepictureinpicture disableremoteplayback <?= $poster !== '' ? 'poster="' . e($poster) . '"' : '' ?>></video>
-                        <video class="hero__video" muted playsinline preload="none" disablepictureinpicture disableremoteplayback></video>
+                        <video class="hero__video" autoplay muted playsinline webkit-playsinline preload="auto" disablepictureinpicture disableremoteplayback <?= $poster !== '' ? 'poster="' . e($poster) . '"' : '' ?>></video>
+                        <video class="hero__video" muted playsinline webkit-playsinline preload="none" disablepictureinpicture disableremoteplayback></video>
                     </div>
                 <?php endif; ?>
             </div>
@@ -4984,24 +4984,6 @@ function view_screens_home(array $__d = []): string
             <?php endif; ?>
         </article>
 
-        <?php if ($videos !== []): ?>
-            <section class="block" id="home-videos">
-                <div class="block__head reveal">
-                    <div>
-                        <h2 class="block__title" data-i18n="home.hero.menu_videos"><?= t('home.hero.menu_videos') ?></h2>
-                    </div>
-                </div>
-                <div class="menu-videos__grid home-videos__grid reveal">
-                    <?php foreach ($videos as $i => $url): ?>
-                        <video controls playsinline muted preload="metadata" disablepictureinpicture
-                               <?= $poster !== '' ? 'poster="' . e($poster) . '"' : '' ?>
-                               aria-label="<?= e(t('home.hero.menu_videos') . ' ' . ($i + 1)) ?>">
-                            <source src="<?= e((string) $url) ?>" type="video/mp4">
-                        </video>
-                    <?php endforeach; ?>
-                </div>
-            </section>
-        <?php endif; ?>
 
         <?php if ($services !== []): ?>
             <section class="block" id="home-services">
@@ -5113,9 +5095,24 @@ function view_screens_about(array $__d = []): string
                 <div class="block__head reveal"><h2 class="block__title" data-i18n="about.activity"><?= t('about.activity') ?></h2></div>
                 <ul class="acts">
                     <?php foreach ($activities as $item): ?>
-                        <li class="act reveal">
-                            <span class="act__icon"><?= icon((string) ($item['icon'] ?? 'sparkles'), 20) ?></span>
-                            <span class="act__body"><b><?= e(tr($item['title'] ?? '')) ?></b><small><?= e(tr($item['text'] ?? '')) ?></small></span>
+                        <?php $more = text_lines(tr($item['more'] ?? '')); ?>
+                        <li class="act act--more reveal">
+                            <details class="act__details">
+                                <summary class="act__sum">
+                                    <span class="act__icon"><?= icon((string) ($item['icon'] ?? 'sparkles'), 20) ?></span>
+                                    <span class="act__body"><b><?= e(tr($item['title'] ?? '')) ?></b><small><?= e(tr($item['text'] ?? '')) ?></small></span>
+                                    <i class="act__toggle" aria-hidden="true"><?= icon('plus', 16) ?></i>
+                                </summary>
+                                <div class="act__extra">
+                                    <?php if ($more !== []): ?>
+                                        <ul class="act__list"><?php foreach ($more as $line): ?><li><?= icon('check', 14) ?><span><?= e($line) ?></span></li><?php endforeach; ?></ul>
+                                    <?php endif; ?>
+                                    <div class="act__actions">
+                                        <button type="button" class="btn btn--primary btn--sm" data-order="" data-press><?= icon('plus', 15) ?><span data-i18n="menu.order"><?= t('menu.order') ?></span></button>
+                                        <button type="button" class="btn btn--glass btn--sm" data-goto="services" data-press><span data-i18n="menu.services"><?= t('menu.services') ?></span><?= icon('chevron-right', 15) ?></button>
+                                    </div>
+                                </div>
+                            </details>
                         </li>
                     <?php endforeach; ?>
                 </ul>
@@ -5303,7 +5300,6 @@ function view_screens_menu(array $__d = []): string
         ['data-goto="experience"', 'zap',            'menu.experience'],
         ['data-goto="contact"',    'send',           'menu.contact'],
     ];
-    $menuVideos = content_hero_videos();
     $extra = [
         ['data-order=""',          'plus',           'menu.order'],
         ['data-goto="profile"',    'settings',       'menu.profile'],
@@ -5324,21 +5320,6 @@ function view_screens_menu(array $__d = []): string
                 </li>
             <?php endforeach; ?>
         </ol>
-        <?php if ($menuVideos !== []): ?>
-            <details class="faq__item menu-videos" open>
-                <summary class="faq__q"><span data-i18n="home.hero.menu_videos"><?= t('home.hero.menu_videos') ?></span>
-                    <i class="faq__icon" aria-hidden="true"><?= icon('video', 17) ?></i>
-                </summary>
-                <div class="menu-videos__grid">
-                    <?php foreach ($menuVideos as $i => $url): ?>
-                        <video controls playsinline preload="none"
-                               aria-label="<?= e(t('home.hero.menu_videos') . ' ' . ($i + 1)) ?>">
-                            <source src="<?= e($url) ?>" type="video/mp4">
-                        </video>
-                    <?php endforeach; ?>
-                </div>
-            </details>
-        <?php endif; ?>
         <div class="mnav__extra">
             <?php foreach ($extra as $item): ?>
                 <button type="button" class="btn btn--glass" <?= $item[0] ?>><?= icon($item[1], 16) ?><span data-i18n="<?= e($item[2]) ?>"><?= t($item[2]) ?></span></button>
@@ -5760,6 +5741,11 @@ function data_source_base(): array
         [
             'icon'  => 'database',
             'title' => ['uz' => '1C va buxgalteriya', 'en' => '1C and accounting', 'ru' => '1С и бухгалтерия'],
+            'more'  => [
+                'uz' => "1C, Didox va SmartPOS orasida ma'lumot almashinuvini avtomatlashtirish\nHujjatlar, schyot-fakturalar va hisobotlarni avtomatik tayyorlash\nTakroriy qo'lda kiritishni kamaytirib, xatolarni oldini olish",
+                'en' => "Automating data exchange between 1C, Didox and SmartPOS\nGenerating documents, invoices and reports automatically\nCutting repetitive manual entry and preventing errors",
+                'ru' => "Автоматизация обмена данными между 1С, Didox и SmartPOS\nАвтоматическая подготовка документов, счетов-фактур и отчётов\nМеньше ручного ввода — меньше ошибок",
+            ],
             'text'  => [
                 'uz' => 'Takroriy hisob-kitob, hujjatlar va operatsion jarayonlar uchun avtomatlashtirish yechimlari.',
                 'en' => 'Automation for repetitive calculations, documents and operational processes.',
@@ -5769,6 +5755,11 @@ function data_source_base(): array
         [
             'icon'  => 'bot',
             'title' => ['uz' => 'AI agentlar', 'en' => 'AI agents', 'ru' => 'AI-агенты'],
+            'more'  => [
+                'uz' => "Telegram bot va Mini App'lar: buyurtma, to'lov, admin panel\nInstagram va YouTube uchun kontent va javoblarni avtomatlashtirish\nBiznes jarayonlariga ulangan mustaqil AI agentlar",
+                'en' => "Telegram bots and Mini Apps: orders, payments, admin panel\nAutomating content and replies for Instagram and YouTube\nAutonomous AI agents connected to business processes",
+                'ru' => "Telegram-боты и Mini App: заказы, оплата, админ-панель\nАвтоматизация контента и ответов для Instagram и YouTube\nАвтономные AI-агенты, встроенные в бизнес-процессы",
+            ],
             'text'  => [
                 'uz' => 'Instagram, YouTube va Telegram uchun AI asosidagi ish oqimlari va avtomatlashtirish tizimlari.',
                 'en' => 'AI-driven workflows and automation systems for Instagram, YouTube and Telegram.',
@@ -5778,6 +5769,11 @@ function data_source_base(): array
         [
             'icon'  => 'bar-chart',
             'title' => ['uz' => 'Ma’lumot tahlili', 'en' => 'Data analysis', 'ru' => 'Анализ данных'],
+            'more'  => [
+                'uz' => "Katta Excel jadvallarini AI yordamida tekshirish\nXato va nomuvofiqliklarni avtomatik aniqlash\nRahbariyat uchun tushunarli hisobot va dashboardlar",
+                'en' => "Checking large Excel sheets with AI\nAutomatically finding errors and mismatches\nClear reports and dashboards for management",
+                'ru' => "Проверка больших таблиц Excel с помощью AI\nАвтоматический поиск ошибок и несоответствий\nПонятные отчёты и дашборды для руководства",
+            ],
             'text'  => [
                 'uz' => 'Excel ma’lumotlarini AI yordamida tekshirish, xatolarni aniqlash va hisobot tayyorlash.',
                 'en' => 'Checking Excel data with AI, finding errors and preparing reports.',
@@ -16312,6 +16308,21 @@ body[data-stack="1"] .topbar__ai, body[data-stack="1"] .topbar__menu { display: 
 .act__body { display: grid; gap: 4px; min-width: 0; }
 .act__body b { font-family: var(--serif); font-size: 17px; font-weight: 600; letter-spacing: -.02em; }
 .act__body small { font-size: 14px; line-height: 1.5; color: var(--muted); }
+.act--more { display: block; padding: 0; }
+.act__details { display: block; }
+.act__sum { display: flex; align-items: flex-start; gap: 14px; padding: 16px; min-height: 44px; cursor: pointer; list-style: none; -webkit-tap-highlight-color: transparent; }
+.act__sum::-webkit-details-marker { display: none; }
+.act__sum .act__body { flex: 1; }
+.act__toggle { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: var(--accent-ink, currentColor); background: rgba(255, 255, 255, .06); transition: transform 240ms var(--e-out); }
+.act__details[open] .act__toggle { transform: rotate(45deg); }
+.act__extra { display: grid; gap: 14px; padding: 0 16px 16px; animation: actIn 260ms var(--e-out); }
+.act__list { display: grid; gap: 8px; margin: 0; padding: 12px 0 0; border-top: 1px solid rgba(255, 255, 255, .08); list-style: none; }
+.act__list li { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; line-height: 1.5; }
+.act__list li > .icon { flex: none; margin-top: 3px; color: var(--accent-ink, currentColor); }
+.act__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.act__actions .btn { min-height: 44px; }
+@keyframes actIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .act__extra { animation: none; } .act__toggle { transition: none; } }
 
 .skillset { display: grid; gap: 18px; padding: 18px; border-radius: var(--r-lg); }
 .skillset__group { display: grid; gap: 10px; }
@@ -16350,6 +16361,7 @@ body.has-mainbtn #order-form [data-order-submit] { display: none; }
     .svcs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .acts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .act { flex-direction: column; }
+    .act--more .act__sum { flex-direction: column; }
     .intro__title { font-size: 56px; }
 }
 @media (min-width: 960px) {
@@ -16479,8 +16491,8 @@ body.no-motion .intro__glow, body.no-motion .orb__core, body.no-motion .tabbar__
 /* --- Xizmat kartalari (rasm bilan) -------------------------------------- */
 .svcs { gap: 14px; }
 .svc { padding: 0; gap: 0; overflow: hidden; border-radius: 28px; justify-items: stretch; }
-.svc__media { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 10; overflow: hidden; background: #071226; }
-.svc__media picture, .svc__media img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 900ms var(--e-out); }
+.svc__media { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 3; overflow: hidden; background: #071226; }
+.svc__media picture, .svc__media img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center center; transition: transform 900ms var(--e-out); }
 .svc__media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, .7)); pointer-events: none; }
 .svc__media--plain { background: radial-gradient(90% 90% at 70% 100%, rgba(40, 155, 255, .45), transparent 65%), #071226; }
 .svc__glyph { color: #8BCBFF; }
@@ -16944,7 +16956,7 @@ body.no-motion .hero__lead, body.no-motion .hero__actions, body.no-motion .hprev
     #home-projects .pj__name, #screen-projects .pj__name { font-size: 17px; }
     #home-projects .pj__tag, #screen-projects .pj__tag { font-size: 13px; }
     #screen-services .svcs { grid-template-columns: minmax(0, 1fr); gap: 10px; }
-    #screen-services .svc__media { aspect-ratio: 2.7 / 1; }
+    #screen-services .svc__media { aspect-ratio: 4 / 3; }
     #screen-services .svc__body { padding: 11px 13px 13px; }
     #screen-services .svc__title { font-size: 18px; }
     #home-faq .faq__q { min-height: 48px; }
@@ -17084,7 +17096,6 @@ body.no-motion .hero__lead, body.no-motion .hero__actions, body.no-motion .hprev
 }
 
 .menu-videos__grid { display: grid; gap: 10px; padding: 0 12px 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 225px), 1fr)); }
-.home-videos__grid { padding: 0; }
 .menu-videos__grid video { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 11px; background: #070e12; }
 
 TEZMIND_CSS_END;
@@ -18308,7 +18319,10 @@ function app_js(): string
         order: 'order.title', ai: 'nav.ai', contact: 'contact.title'
     };
     /* Doim yangi ma'lumot kerak bo'lgan ekranlar keshlanmaydi */
-    var NO_CACHE = { messages: 1, profile: 1, settings: 1, order: 1, home: 1 };
+    var NO_CACHE = { messages: 1, profile: 1, settings: 1, order: 1 };
+    /* Tab bar va menyu ekranlari — ilova ochilgach bo'sh vaqtda oldindan yuklanadi. */
+    var WARM_SCREENS = ['services', 'projects', 'about', 'home', 'contact', 'skills', 'experience', 'menu'];
+    var WARM_STEP_MS = 120;
 
     function isDesktop() { return window.matchMedia && window.matchMedia('(min-width: 960px)').matches; }
 
@@ -18624,10 +18638,12 @@ function app_js(): string
             var timer = 0;
             var observer = null;
             var disposed = false;
-            var singlePlayback = window.matchMedia('(hover: none)').matches;
+            var singlePlayback = false;
+
+            function motionOff() { return AT.state.prefs.motion === false; }
 
             function canPlay() {
-                return !disposed && visible && !document.hidden && !AT.reduced();
+                return !disposed && visible && !document.hidden && !motionOff();
             }
 
             function prepare(player, clip) {
@@ -18715,7 +18731,7 @@ function app_js(): string
             function sync() {
                 if (!canPlay()) {
                     players.forEach(function (player) { player.pause(); });
-                    if (AT.reduced()) { players.forEach(function (player) { player.classList.remove('is-on'); }); }
+                    if (motionOff()) { players.forEach(function (player) { player.classList.remove('is-on'); }); }
                     return;
                 }
                 if (nextVideo) { play(nextVideo); return; }
@@ -18736,6 +18752,7 @@ function app_js(): string
                 if (event.isTrusted && canPlay() && active.paused) { sync(); }
             }
             document.addEventListener('click', retryOnGesture, true);
+            document.addEventListener('touchstart', retryOnGesture, { capture: true, passive: true });
             document.addEventListener('visibilitychange', sync);
             if (preference.addEventListener) { preference.addEventListener('change', sync); }
             if ('IntersectionObserver' in window) {
@@ -18753,6 +18770,7 @@ function app_js(): string
                 window.clearTimeout(timer);
                 if (observer) { observer.disconnect(); }
                 document.removeEventListener('click', retryOnGesture, true);
+                document.removeEventListener('touchstart', retryOnGesture, true);
                 document.removeEventListener('visibilitychange', sync);
                 if (preference.removeEventListener) { preference.removeEventListener('change', sync); }
                 players.forEach(function (player) {
@@ -19328,6 +19346,7 @@ function app_js(): string
                 Router.watchScroll(first);
             }
             Router.bindTabs();
+            Router.warm();
             Router.bindHistory();
             Router.bindSwipeBack();
             Router.paintChrome();
@@ -19388,6 +19407,17 @@ function app_js(): string
             AT.api.screen(name, query).then(function (html) {
                 Router.cache[Router.key(name, query)] = html;
             }).catch(function () {});
+        },
+
+        /** Barcha asosiy ekranlarni fon rejimida keshga oladi: tab almashish bir zumda. */
+        warm: function () {
+            var run = function () {
+                WARM_SCREENS.forEach(function (name, i) {
+                    window.setTimeout(function () { Router.prefetch(name, ''); }, i * WARM_STEP_MS);
+                });
+            };
+            if ('requestIdleCallback' in window) { window.requestIdleCallback(run, { timeout: 1500 }); }
+            else { window.setTimeout(run, 600); }
         },
 
         forget: function (name) {
@@ -19850,7 +19880,9 @@ function app_js(): string
             var p = t.closest('[data-project]');
             if (p) { Router.prefetch('project', 'slug=' + encodeURIComponent(p.getAttribute('data-project'))); return; }
             var g = t.closest('[data-goto]');
-            if (g) { Router.prefetch(g.getAttribute('data-goto'), ''); }
+            if (g) { Router.prefetch(g.getAttribute('data-goto'), ''); return; }
+            var tab = t.closest('.tab[data-tab]');
+            if (tab) { Router.prefetch(tab.getAttribute('data-tab'), ''); }
         }, { passive: true });
 
         document.addEventListener('click', function (event) {
