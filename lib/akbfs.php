@@ -101,7 +101,7 @@ final class AkbFs
             if ($body !== false && $status >= 200 && $status < 300) {
                 return json_decode((string) $body, true);
             }
-            $lastError = $curlError !== '' ? $curlError : ('HTTP ' . $status);
+            $lastError = $curlError !== '' ? $curlError : ('HTTP ' . $status . ' ' . substr((string) $body, 0, 300));
             // 4xx (bad key, bad path) will not succeed on retry
             if ($status >= 400 && $status < 500) {
                 break;

@@ -7,7 +7,7 @@ revoke all on schema akbartech from public, anon, authenticated;
 
 create table akbartech.files (
   id          bigint generated always as identity primary key,
-  path        text not null unique check (path ~ '^[A-Za-z0-9._/-]{1,300}$' and path !~ '(^|/)\.\.(/|$)'),
+  path        text not null unique check (length(path) between 1 and 300 and path ~ '^[A-Za-z0-9._/-]+$' and path !~ '(^|/)\.\.(/|$)'),
   data        bytea not null default ''::bytea,
   is_dir      boolean not null default false,
   created_at  timestamptz not null default now(),
