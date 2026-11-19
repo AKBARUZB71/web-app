@@ -59,9 +59,17 @@ function normalise_server(): void
         $_SERVER['REMOTE_ADDR'] = $ip;
     }
 
-    $host = first_header_value('HTTP_X_FORWARDED_HOST');
-    if ($host !== '' && preg_match('/^[A-Za-z0-9.\-]+(:\d+)?$/', $host)) {
-        $_SERVER['HTTP_HOST'] = $host;
+    // Canonical host: the app derives webhook / Mini App URLs from HTTP_HOST and
+    // auto-reconnects the bot when it changes. Without pinning, opening any
+    // deployment-specific *.vercel.app URL would move the webhook there.
+    $canonical = strtolower(trim((string) getenv('APP_HOST')));
+    if ($canonical !== '' && preg_match('/^[a-z0-9.\-]+$/', $canonical)) {
+        $_SERVER['HTTP_HOST'] = $canonical;
+    } else {
+        $host = first_header_value('HTTP_X_FORWARDED_HOST');
+        if ($host !== '' && preg_match('/^[A-Za-z0-9.\-]+$/', $host)) {
+            $_SERVER['HTTP_HOST'] = $host;
+        }
     }
     $_SERVER['HTTPS'] = 'on';
     $_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
