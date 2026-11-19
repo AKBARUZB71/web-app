@@ -9035,12 +9035,20 @@ function bot_phone_keyboard(array $c): array
     ];
 }
 
+const BOT_MENU_BUTTON_TEXT = '🚀 Ilovani ochish';
+
+/** Pastki menyu tugmasi: mini app'ni ochadi. */
+function bot_menu_button(): array
+{
+    return ['type' => 'web_app', 'text' => BOT_MENU_BUTTON_TEXT, 'web_app' => ['url' => bot_app_url()]];
+}
+
 /** Shu foydalanuvchi uchun pastki menyu tugmasini mini app'ga aylantiradi. */
 function bot_enable_app(int $chatId): void
 {
     bot_api('setChatMenuButton', [
         'chat_id'     => $chatId,
-        'menu_button' => ['type' => 'web_app', 'text' => 'AKBARTECH', 'web_app' => ['url' => bot_app_url()]],
+        'menu_button' => bot_menu_button(),
     ], 8);
 }
 
@@ -9152,9 +9160,8 @@ function bot_setup(): array
         'drop_pending_updates' => false,
     ]);
 
-    // Standart menyu — buyruqlar; mini app tugmasi raqam tasdiqlangach
-    // har bir foydalanuvchi uchun alohida yoqiladi (bot_enable_app).
-    $results['menu_button'] = bot_api('setChatMenuButton', ['menu_button' => ['type' => 'commands']]);
+    // Standart menyu — hamma uchun "🚀 Ilovani ochish" (mini app).
+    $results['menu_button'] = bot_api('setChatMenuButton', ['menu_button' => bot_menu_button()]);
     $adminId = (int) cfg('admin_tg_id', 0);
     if ($adminId > 0) {
         bot_enable_app($adminId);
